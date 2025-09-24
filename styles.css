@@ -157,7 +157,7 @@ body.light-mode #darkModeIcon::before {
     padding: 0 10px;
 }
 
-.stats-panel, .achievements-panel, .shop-panel {
+.stats-panel, .achievements-panel, .shop-panel, .purchased-items-panel {
     border-radius: var(--border-radius);
     border: 2px solid var(--primary-color);
     box-shadow: var(--box-shadow), var(--warm-glow);
@@ -166,9 +166,62 @@ body.light-mode #darkModeIcon::before {
     backdrop-filter: blur(10px);
 }
 
-.stats-panel:hover, .achievements-panel:hover, .shop-panel:hover {
+.stats-panel:hover, .achievements-panel:hover, .shop-panel:hover, .purchased-items-panel:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Purchased Items Styling */
+.purchased-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition);
+}
+
+.purchased-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(3px);
+}
+
+.purchased-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.purchased-item-name {
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.purchased-item-description {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 2px;
+}
+
+.purchased-item-count {
+    background: var(--primary-color);
+    color: var(--light-color);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+}
+
+.purchased-item-production {
+    font-size: 0.7rem;
+    color: var(--success-color);
+    font-weight: 500;
+    text-align: right;
 }
 
 .card-header {
