@@ -1,29 +1,29 @@
-// CookieGame Class - Main game logic
-// Made by Ayoub & Younes 2025
-
 class CookieGame {
-    // Class Properties (Blueprint)
     constructor() {
-        // Game Stats
         this.cookies = 0;
         this.totalCookies = 0;
         this.totalClicks = 0;
         this.cookiesPerClick = 1;
+        this.cookiesPerSecond = 0;
         
-        // Game Elements
+        this.grannyCount = 0;
+        this.grannyCost = 100;
+        
         this.cookieCountElement = null;
         this.totalCookiesElement = null;
         this.totalClicksElement = null;
         this.perClickElement = null;
         this.clickEffectElement = null;
         this.cookieButton = null;
+        this.cookiesPerSecondElement = null;
+        this.autoclickersListElement = null;
         
-        // Initialize the game
         this.initializeElements();
         this.setupEventListeners();
+        this.renderSimpleStore();
+        this.startAutoGeneration();
     }
     
-    // Initialize DOM Elements
     initializeElements() {
         this.cookieCountElement = document.getElementById('cookieCount');
         this.totalCookiesElement = document.getElementById('totalCookies');
@@ -31,16 +31,16 @@ class CookieGame {
         this.perClickElement = document.getElementById('perClickValue');
         this.clickEffectElement = document.getElementById('clickEffect');
         this.cookieButton = document.getElementById('mainCookie');
+        this.cookiesPerSecondElement = document.getElementById('cookiesPerSecond');
+        this.autoclickersListElement = document.getElementById('autoclickersList');
     }
     
-    // Setup Event Listeners
     setupEventListeners() {
         if (this.cookieButton) {
             this.cookieButton.addEventListener('click', () => this.clickCookie());
         }
     }
     
-    // Main Game Methods
     clickCookie() {
         this.cookies += this.cookiesPerClick;
         this.totalCookies += this.cookiesPerClick;
@@ -66,6 +66,10 @@ class CookieGame {
         if (this.perClickElement) {
             this.perClickElement.textContent = this.formatNumber(this.cookiesPerClick);
         }
+        
+        if (this.cookiesPerSecondElement) {
+            this.cookiesPerSecondElement.textContent = this.formatNumber(this.cookiesPerSecond);
+        }
     }
     
     showClickEffect() {
@@ -80,6 +84,9 @@ class CookieGame {
     }
     
     formatNumber(number) {
+        // Altijd hele getallen, geen decimalen
+        number = Math.floor(number);
+        
         if (number < 1000) {
             return number.toString();
         }
@@ -89,10 +96,12 @@ class CookieGame {
         if (number < 1000000000) {
             return Math.floor(number / 1000000) + 'M';
         }
-        return Math.floor(number / 1000000000) + 'B';
+        if (number < 1000000000000) {
+            return Math.floor(number / 1000000000) + 'B';
+        }
+        return Math.floor(number / 1000000000000) + 'T';
     }
     
-    // Game State Methods
     getGameData() {
         return {
             cookies: this.cookies,
@@ -115,6 +124,48 @@ class CookieGame {
         this.totalCookies = 0;
         this.totalClicks = 0;
         this.cookiesPerClick = 1;
+        this.cookiesPerSecond = 0;
+        this.grannyCount = 0;
+        this.grannyCost = 100;
         this.updateDisplay();
+        this.renderSimpleStore();
+    }
+    
+    // Super Simple Store
+    renderSimpleStore() {
+        if (!this.autoclickersListElement) return;
+        
+        this.cookiesPerSecond = this.grannyCount * 1; // 1 cookie per second per granny
+        
+        this.autoclickersListElement.innerHTML = `
+            <div class="p-3">
+                <h6>👵 Granny</h6>
+                <p>Owned: ${this.grannyCount}</p>
+                <p>+1 cookie/sec each</p>
+                <button onclick="cookieGame.buyGranny()" class="btn btn-primary">
+                    Buy for ${this.grannyCost} cookies
+                </button>
+            </div>
+        `;
+    }
+    
+    buyGranny() {
+        if (this.cookies >= this.grannyCost) {
+            this.cookies -= this.grannyCost;
+            this.grannyCount++;
+            this.grannyCost = Math.floor(this.grannyCost * 1.5); // Price increases
+            this.updateDisplay();
+            this.renderSimpleStore();
+        }
+    }
+    
+    startAutoGeneration() {
+        setInterval(() => {
+            if (this.cookiesPerSecond > 0) {
+                this.cookies += this.cookiesPerSecond;
+                this.totalCookies += this.cookiesPerSecond;
+                this.updateDisplay();
+            }
+        }, 1000);
     }
 }

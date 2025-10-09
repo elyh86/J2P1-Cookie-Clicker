@@ -17,15 +17,13 @@ class ThemeManager {
         this.themeButton = document.getElementById('darkModeBtn');
         this.themeIcon = document.getElementById('darkModeIcon');
     }
-    
-    // Setup Event Listeners
+
     setupEventListeners() {
         if (this.themeButton) {
             this.themeButton.addEventListener('click', () => this.toggleTheme());
         }
     }
     
-    // Theme Methods
     toggleTheme() {
         if (this.isDarkTheme) {
             this.switchToLightMode();
