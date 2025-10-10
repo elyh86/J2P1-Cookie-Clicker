@@ -33,6 +33,7 @@ class CookieGame {
         this.cookieButton = document.getElementById('mainCookie');
         this.cookiesPerSecondElement = document.getElementById('cookiesPerSecond');
         this.autoclickersListElement = document.getElementById('autoclickersList');
+        this.purchasedItemsElement = document.getElementById('purchasedItemsList');
     }
     
     setupEventListeners() {
@@ -52,7 +53,8 @@ class CookieGame {
     
     updateDisplay() {
         if (this.cookieCountElement) {
-            this.cookieCountElement.textContent = this.formatNumber(this.cookies);
+            // Show exact amount of cookies (no formatting)
+            this.cookieCountElement.textContent = Math.floor(this.cookies).toLocaleString();
         }
         
         if (this.totalCookiesElement) {
@@ -70,6 +72,8 @@ class CookieGame {
         if (this.cookiesPerSecondElement) {
             this.cookiesPerSecondElement.textContent = this.formatNumber(this.cookiesPerSecond);
         }
+        
+        this.updatePurchasedItems();
     }
     
     showClickEffect() {
@@ -156,6 +160,26 @@ class CookieGame {
             this.grannyCost = Math.floor(this.grannyCost * 1.5); // Price increases
             this.updateDisplay();
             this.renderSimpleStore();
+        }
+    }
+    
+    updatePurchasedItems() {
+        if (!this.purchasedItemsElement) return;
+        
+        if (this.grannyCount > 0) {
+            this.purchasedItemsElement.innerHTML = `
+                <div class="purchased-item mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>👵 Granny</strong>
+                            <div class="text-muted small">+${this.grannyCount} cookies/sec</div>
+                        </div>
+                        <span class="badge bg-primary">${this.grannyCount}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            this.purchasedItemsElement.innerHTML = '<p class="text-muted">Nog geen items gekocht...</p>';
         }
     }
     
