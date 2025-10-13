@@ -1,3 +1,77 @@
+class Autoclicker {
+    constructor(name, baseCost, baseProduction, costMultiplier = 1.5) {
+        this.name = name;
+        this.baseCost = baseCost;
+        this.baseProduction = baseProduction;
+        this.costMultiplier = costMultiplier;
+        this.count = 0;
+        this.currentCost = baseCost;
+    }
+
+    canAfford(cookies) {
+        return cookies >= this.currentCost;
+    }
+
+    purchase() {
+        if (this.count === 0) {
+            this.count = 1;
+        } else {
+            this.count++;
+        }
+        
+        const cost = this.currentCost;
+        this.currentCost = Math.floor(this.currentCost * this.costMultiplier);
+        return cost;
+    }
+
+    getProduction(upgradeMultiplier = 1) {
+        return this.count * this.baseProduction * upgradeMultiplier;
+    }
+
+    reset() {
+        this.count = 0;
+        this.currentCost = this.baseCost;
+    }
+
+    getCount() {
+        return this.count;
+    }
+
+    getCost() {
+        return this.currentCost;
+    }
+}
+
+class Upgrade {
+    constructor(name, description, cost, multiplier) {
+        this.name = name;
+        this.description = description;
+        this.cost = cost;
+        this.multiplier = multiplier;
+        this.owned = false;
+    }
+
+    canAfford(cookies) {
+        return cookies >= this.cost && !this.owned;
+    }
+
+    purchase() {
+        if (!this.owned) {
+            this.owned = true;
+            return this.cost;
+        }
+        return 0;
+    }
+
+    getMultiplier() {
+        return this.owned ? this.multiplier : 1;
+    }
+
+    reset() {
+        this.owned = false;
+    }
+}
+
 class CookieGame {
     constructor() {
         this.cookies = 0;
@@ -6,8 +80,8 @@ class CookieGame {
         this.cookiesPerClick = 1;
         this.cookiesPerSecond = 0;
         
-        this.grannyCount = 0;
-        this.grannyCost = 100;
+        this.initializeAutoclickers();
+        this.initializeUpgrades();
         
         this.cookieCountElement = null;
         this.totalCookiesElement = null;
@@ -21,9 +95,26 @@ class CookieGame {
         this.initializeElements();
         this.setupEventListeners();
         this.renderSimpleStore();
+        this.renderUpgrades();
         this.startAutoGeneration();
     }
     
+    initializeAutoclickers() {
+        this.autoclickers = {
+            granny: new Autoclicker("Granny", 100, 1, 1.5)
+        };
+    }
+
+    initializeUpgrades() {
+        this.upgrades = {
+            speedBoost: new Upgrade("Snelheids Boost", "Verdubbelt granny snelheid", 500, 2),
+            superGranny: new Upgrade("Super Granny", "Granny's maken 3x meer cookies", 1000, 3),
+            cookieFactory: new Upgrade("Cookie Fabriek", "Granny's maken 5x meer cookies", 2500, 5),
+            magicOven: new Upgrade("Magische Oven", "Granny's maken 10x meer cookies", 5000, 10),
+            timeWarp: new Upgrade("Tijd Warp", "Granny's maken 20x meer cookies", 10000, 20)
+        };
+    }
+
     initializeElements() {
         this.cookieCountElement = document.getElementById('cookieCount');
         this.totalCookiesElement = document.getElementById('totalCookies');
@@ -33,6 +124,7 @@ class CookieGame {
         this.cookieButton = document.getElementById('mainCookie');
         this.cookiesPerSecondElement = document.getElementById('cookiesPerSecond');
         this.autoclickersListElement = document.getElementById('autoclickersList');
+        this.upgradesListElement = document.getElementById('upgradesList');
         this.purchasedItemsElement = document.getElementById('purchasedItemsList');
     }
     
@@ -111,7 +203,9 @@ class CookieGame {
             cookies: this.cookies,
             totalCookies: this.totalCookies,
             totalClicks: this.totalClicks,
-            cookiesPerClick: this.cookiesPerClick
+            cookiesPerClick: this.cookiesPerClick,
+            autoclickers: this.autoclickers,
+            upgrades: this.upgrades
         };
     }
     
@@ -120,7 +214,29 @@ class CookieGame {
         this.totalCookies = data.totalCookies || 0;
         this.totalClicks = data.totalClicks || 0;
         this.cookiesPerClick = data.cookiesPerClick || 1;
+        
+        // Load autoclickers
+        if (data.autoclickers) {
+            Object.keys(this.autoclickers).forEach(key => {
+                if (data.autoclickers[key]) {
+                    this.autoclickers[key].count = data.autoclickers[key].count || 0;
+                    this.autoclickers[key].currentCost = data.autoclickers[key].currentCost || this.autoclickers[key].baseCost;
+                }
+            });
+        }
+        
+        // Load upgrades
+        if (data.upgrades) {
+            Object.keys(this.upgrades).forEach(key => {
+                if (data.upgrades[key]) {
+                    this.upgrades[key].owned = data.upgrades[key].owned || false;
+                }
+            });
+        }
+        
         this.updateDisplay();
+        this.renderSimpleStore();
+        this.renderUpgrades();
     }
     
     resetGame() {
@@ -129,58 +245,124 @@ class CookieGame {
         this.totalClicks = 0;
         this.cookiesPerClick = 1;
         this.cookiesPerSecond = 0;
-        this.grannyCount = 0;
-        this.grannyCost = 100;
+        
+        // Reset autoclickers
+        Object.values(this.autoclickers).forEach(autoclicker => {
+            autoclicker.reset();
+        });
+        
+        // Reset upgrades
+        Object.values(this.upgrades).forEach(upgrade => {
+            upgrade.reset();
+        });
+        
         this.updateDisplay();
         this.renderSimpleStore();
+        this.renderUpgrades();
     }
     
-    // Super Simple Store
+    calculateAutoclickerMultiplier() {
+        let multiplier = 1;
+        Object.values(this.upgrades).forEach(upgrade => {
+            multiplier *= upgrade.getMultiplier();
+        });
+        return multiplier;
+    }
+
+    calculateTotalProduction() {
+        let total = 0;
+        const multiplier = this.calculateAutoclickerMultiplier();
+        
+        Object.values(this.autoclickers).forEach(autoclicker => {
+            total += autoclicker.getProduction(multiplier);
+        });
+        
+        return total;
+    }
+
+    // Autoclickers Store
     renderSimpleStore() {
         if (!this.autoclickersListElement) return;
         
-        this.cookiesPerSecond = this.grannyCount * 1; // 1 cookie per second per granny
+        this.cookiesPerSecond = this.calculateTotalProduction();
         
-        this.autoclickersListElement.innerHTML = `
-            <div class="p-3">
-                <h6>👵 Granny</h6>
-                <p>Owned: ${this.grannyCount}</p>
-                <p>+1 cookie/sec each</p>
-                <button onclick="cookieGame.buyGranny()" class="btn btn-primary">
-                    Buy for ${this.grannyCost} cookies
-                </button>
-            </div>
-        `;
+        let autoclickersHTML = '';
+        
+        Object.entries(this.autoclickers).forEach(([key, autoclicker]) => {
+            autoclickersHTML += `
+                <div class="p-3 border-bottom">
+                    <h6>${autoclicker.name}</h6>
+                    <p>Owned: ${autoclicker.getCount()}</p>
+                    <p>+${autoclicker.baseProduction} cookie/sec each</p>
+                    <button onclick="cookieGame.buyAutoclicker('${key}')" class="btn btn-primary">
+                        Buy for ${autoclicker.getCost()} cookies
+                    </button>
+                </div>
+            `;
+        });
+        
+        this.autoclickersListElement.innerHTML = autoclickersHTML;
     }
     
-    buyGranny() {
-        if (this.cookies >= this.grannyCost) {
-            this.cookies -= this.grannyCost;
-            this.grannyCount++;
-            this.grannyCost = Math.floor(this.grannyCost * 1.5); // Price increases
+    buyAutoclicker(autoclickerKey) {
+        const autoclicker = this.autoclickers[autoclickerKey];
+        if (!autoclicker) return;
+        
+        if (autoclicker.canAfford(this.cookies)) {
+            const cost = autoclicker.purchase();
+            this.cookies -= cost;
             this.updateDisplay();
             this.renderSimpleStore();
+            this.renderUpgrades();
         }
     }
     
     updatePurchasedItems() {
         if (!this.purchasedItemsElement) return;
         
-        if (this.grannyCount > 0) {
-            this.purchasedItemsElement.innerHTML = `
-                <div class="purchased-item mb-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>👵 Granny</strong>
-                            <div class="text-muted small">+${this.grannyCount} cookies/sec</div>
+        let itemsHTML = '';
+        
+        // Show autoclickers
+        Object.values(this.autoclickers).forEach(autoclicker => {
+            if (autoclicker.getCount() > 0) {
+                const multiplier = this.calculateAutoclickerMultiplier();
+                const production = autoclicker.getProduction(multiplier);
+                itemsHTML += `
+                    <div class="purchased-item mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${autoclicker.name}</strong>
+                                <div class="text-muted small">+${production} cookies/sec</div>
+                            </div>
+                            <span class="badge bg-primary">${autoclicker.getCount()}</span>
                         </div>
-                        <span class="badge bg-primary">${this.grannyCount}</span>
                     </div>
-                </div>
-            `;
-        } else {
-            this.purchasedItemsElement.innerHTML = '<p class="text-muted">Nog geen items gekocht...</p>';
+                `;
+            }
+        });
+        
+        // Show owned upgrades
+        Object.values(this.upgrades).forEach(upgrade => {
+            if (upgrade.owned) {
+                itemsHTML += `
+                    <div class="purchased-item mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${upgrade.name}</strong>
+                                <div class="text-muted small">${upgrade.description}</div>
+                            </div>
+                            <span class="badge bg-success">Owned</span>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        if (itemsHTML === '') {
+            itemsHTML = '<p class="text-muted">Nog geen items gekocht...</p>';
         }
+        
+        this.purchasedItemsElement.innerHTML = itemsHTML;
     }
     
     startAutoGeneration() {
@@ -191,5 +373,52 @@ class CookieGame {
                 this.updateDisplay();
             }
         }, 1000);
+    }
+    
+    // Upgrades Store
+    renderUpgrades() {
+        if (!this.upgradesListElement) return;
+        
+        let upgradesHTML = '';
+        
+        Object.entries(this.upgrades).forEach(([key, upgrade]) => {
+            if (!upgrade.owned) {
+                upgradesHTML += `
+                    <div class="p-3 border-bottom">
+                        <h6>${upgrade.name}</h6>
+                        <p class="small text-muted">${upgrade.description}</p>
+                        <button onclick="cookieGame.buyUpgrade('${key}')" class="btn btn-primary">
+                            Buy for ${upgrade.cost} cookies
+                        </button>
+                    </div>
+                `;
+            } else {
+                upgradesHTML += `
+                    <div class="p-3 border-bottom bg-light">
+                        <h6>${upgrade.name}</h6>
+                        <p class="small text-success">Gekocht!</p>
+                    </div>
+                `;
+            }
+        });
+        
+        if (upgradesHTML === '') {
+            upgradesHTML = '<div class="p-3"><p class="text-muted">Alle upgrades gekocht!</p></div>';
+        }
+        
+        this.upgradesListElement.innerHTML = upgradesHTML;
+    }
+    
+    buyUpgrade(upgradeKey) {
+        const upgrade = this.upgrades[upgradeKey];
+        if (!upgrade) return;
+        
+        if (upgrade.canAfford(this.cookies)) {
+            const cost = upgrade.purchase();
+            this.cookies -= cost;
+            this.updateDisplay();
+            this.renderSimpleStore();
+            this.renderUpgrades();
+        }
     }
 }
