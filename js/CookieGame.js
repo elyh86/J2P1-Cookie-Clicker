@@ -215,7 +215,6 @@ class CookieGame {
         this.totalClicks = data.totalClicks || 0;
         this.cookiesPerClick = data.cookiesPerClick || 1;
         
-        // Load autoclickers
         if (data.autoclickers) {
             Object.keys(this.autoclickers).forEach(key => {
                 if (data.autoclickers[key]) {
@@ -225,7 +224,6 @@ class CookieGame {
             });
         }
         
-        // Load upgrades
         if (data.upgrades) {
             Object.keys(this.upgrades).forEach(key => {
                 if (data.upgrades[key]) {
@@ -341,7 +339,6 @@ class CookieGame {
             }
         });
         
-        // Show owned upgrades
         Object.values(this.upgrades).forEach(upgrade => {
             if (upgrade.owned) {
                 itemsHTML += `
@@ -375,7 +372,6 @@ class CookieGame {
         }, 1000);
     }
     
-    // Upgrades Store
     renderUpgrades() {
         if (!this.upgradesListElement) return;
         

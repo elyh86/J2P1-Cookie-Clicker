@@ -1,8 +1,4 @@
-// SaveManager Module - Handles saving and loading game data
-// Made by Ayoub & Younes 2025
-
 class SaveManager {
-    // Class Properties
     constructor() {
         this.saveKey = 'cookieGame';
         this.saveButton = null;
@@ -12,13 +8,11 @@ class SaveManager {
         this.setupEventListeners();
     }
     
-    // Initialize DOM Elements
     initializeElements() {
         this.saveButton = document.getElementById('saveGame');
         this.resetButton = document.getElementById('restartGame');
     }
-    
-    // Setup Event Listeners
+
     setupEventListeners() {
         if (this.saveButton) {
             this.saveButton.addEventListener('click', () => this.showSaveDialog());
@@ -28,8 +22,7 @@ class SaveManager {
             this.resetButton.addEventListener('click', () => this.showResetDialog());
         }
     }
-    
-    // Save Methods
+
     saveGame(gameData) {
         try {
             const dataText = JSON.stringify(gameData);
@@ -63,10 +56,8 @@ class SaveManager {
             return false;
         }
     }
-    
-    // UI Dialog Methods
+
     showSaveDialog() {
-        // This will be connected to the game instance
         if (window.cookieGame) {
             const gameData = window.cookieGame.getGameData();
             if (this.saveGame(gameData)) {
@@ -86,8 +77,7 @@ class SaveManager {
             }
         }
     }
-    
-    // Check if save exists
+
     hasSavedGame() {
         return localStorage.getItem(this.saveKey) !== null;
     }

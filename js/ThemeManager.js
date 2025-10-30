@@ -1,8 +1,4 @@
-// ThemeManager Module - Handles dark/light theme switching
-// Made by Ayoub & Younes 2025
-
 class ThemeManager {
-    // Class Properties
     constructor() {
         this.isDarkTheme = true;
         this.themeButton = null;
@@ -12,7 +8,6 @@ class ThemeManager {
         this.setupEventListeners();
     }
     
-    // Initialize DOM Elements
     initializeElements() {
         this.themeButton = document.getElementById('darkModeBtn');
         this.themeIcon = document.getElementById('darkModeIcon');
@@ -52,8 +47,7 @@ class ThemeManager {
             }
         }
     }
-    
-    // Get current theme state
+
     getCurrentTheme() {
         return this.isDarkTheme ? 'dark' : 'light';
     }
