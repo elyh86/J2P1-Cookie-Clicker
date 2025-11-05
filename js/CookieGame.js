@@ -82,6 +82,7 @@ class CookieGame {
         
         this.initializeAutoclickers();
         this.initializeUpgrades();
+        this.initializeAchievements();
         
         this.cookieCountElement = null;
         this.totalCookiesElement = null;
@@ -101,18 +102,43 @@ class CookieGame {
     
     initializeAutoclickers() {
         this.autoclickers = {
-            granny: new Autoclicker("Granny", 100, 1, 1.5)
+            cursor: new Autoclicker("Cursor", 15, 0.1, 1.15),
+            granny: new Autoclicker("Oma", 100, 1, 1.15),
+            farm: new Autoclicker("Boerderij", 1100, 8, 1.15),
+            mine: new Autoclicker("Mijn", 12000, 47, 1.15),
+            factory: new Autoclicker("Fabriek", 130000, 260, 1.15),
+            bank: new Autoclicker("Bank", 1400000, 1400, 1.15),
+            temple: new Autoclicker("Tempel", 20000000, 7800, 1.15),
+            wizard: new Autoclicker("Tovenaar", 330000000, 44000, 1.15),
+            spaceship: new Autoclicker("Ruimteschip", 5100000000, 260000, 1.15),
+            portal: new Autoclicker("Tijdportaal", 75000000000, 1600000, 1.15)
         };
     }
 
     initializeUpgrades() {
         this.upgrades = {
-            speedBoost: new Upgrade("Snelheids Boost", "Verdubbelt granny snelheid", 500, 2),
-            superGranny: new Upgrade("Super Granny", "Granny's maken 3x meer cookies", 1000, 3),
-            cookieFactory: new Upgrade("Cookie Fabriek", "Granny's maken 5x meer cookies", 2500, 5),
-            magicOven: new Upgrade("Magische Oven", "Granny's maken 10x meer cookies", 5000, 10),
-            timeWarp: new Upgrade("Tijd Warp", "Granny's maken 20x meer cookies", 10000, 20)
+            reinforcedCursor: new Upgrade("Versterkte Cursor", "Cursors zijn 2x effectiever", 100, 2),
+            grannyHelper: new Upgrade("Oma's Helper", "Oma's maken 2x meer cookies", 1000, 2),
+            megaFarm: new Upgrade("Mega Boerderij", "Boerderijen zijn 2x productiever", 11000, 2),
+            deepMining: new Upgrade("Diepe Mijnbouw", "Mijnen delven 2x sneller", 120000, 2),
+            automation: new Upgrade("Automatisering", "Alle productie 2x sneller", 500000, 2),
+            quantumChip: new Upgrade("Quantum Chip", "Alle gebouwen 3x effectiever", 5000000, 3),
+            timeMachine: new Upgrade("Tijdmachine", "Productie 5x sneller", 50000000, 5),
+            cosmicPower: new Upgrade("Kosmische Kracht", "Alles 10x krachtiger", 500000000, 10)
         };
+    }
+
+    initializeAchievements() {
+        this.achievements = {
+            firstClick: { name: "Eerste Klik", desc: "Klik je eerste cookie", unlocked: false, requirement: () => this.totalClicks >= 1, theme: null },
+            clickMaster: { name: "Klik Meester", desc: "Klik 100 keer", unlocked: false, requirement: () => this.totalClicks >= 100, theme: "blue" },
+            cookieCollector: { name: "Cookie Verzamelaar", desc: "Verzamel 1000 cookies", unlocked: false, requirement: () => this.totalCookies >= 1000, theme: null },
+            millionaire: { name: "Miljonair", desc: "Verzamel 1 miljoen cookies", unlocked: false, requirement: () => this.totalCookies >= 1000000, theme: "gold" },
+            firstAutoclicker: { name: "Eerste Helper", desc: "Koop je eerste autoclicker", unlocked: false, requirement: () => Object.values(this.autoclickers).some(a => a.count > 0), theme: null },
+            upgradeUnlocked: { name: "Verbeterd", desc: "Koop je eerste upgrade", unlocked: false, requirement: () => Object.values(this.upgrades).some(u => u.owned), theme: "purple" },
+            productionKing: { name: "Productie Koning", desc: "Bereik 100 cookies/sec", unlocked: false, requirement: () => this.cookiesPerSecond >= 100, theme: "green" }
+        };
+        this.unlockedThemes = ['dark', 'light']; // Start themes
     }
 
     initializeElements() {
@@ -166,6 +192,7 @@ class CookieGame {
         }
         
         this.updatePurchasedItems();
+        this.checkAchievements();
     }
     
     showClickEffect() {
@@ -205,7 +232,9 @@ class CookieGame {
             totalClicks: this.totalClicks,
             cookiesPerClick: this.cookiesPerClick,
             autoclickers: this.autoclickers,
-            upgrades: this.upgrades
+            upgrades: this.upgrades,
+            achievements: this.achievements,
+            unlockedThemes: this.unlockedThemes
         };
     }
     
@@ -232,6 +261,18 @@ class CookieGame {
             });
         }
         
+        if (data.achievements) {
+            Object.keys(this.achievements).forEach(key => {
+                if (data.achievements[key]) {
+                    this.achievements[key].unlocked = data.achievements[key].unlocked || false;
+                }
+            });
+        }
+        
+        if (data.unlockedThemes) {
+            this.unlockedThemes = data.unlockedThemes;
+        }
+        
         this.updateDisplay();
         this.renderSimpleStore();
         this.renderUpgrades();
@@ -253,6 +294,13 @@ class CookieGame {
         Object.values(this.upgrades).forEach(upgrade => {
             upgrade.reset();
         });
+        
+        // Reset achievements
+        Object.values(this.achievements).forEach(achievement => {
+            achievement.unlocked = false;
+        });
+        
+        this.unlockedThemes = ['dark', 'light'];
         
         this.updateDisplay();
         this.renderSimpleStore();
@@ -417,4 +465,69 @@ class CookieGame {
             this.renderUpgrades();
         }
     }
+    
+    checkAchievements() {
+        Object.entries(this.achievements).forEach(([key, achievement]) => {
+            if (!achievement.unlocked && achievement.requirement()) {
+                achievement.unlocked = true;
+                this.showAchievementNotification(achievement);
+                
+                // Unlock theme if achievement has one
+                if (achievement.theme && !this.unlockedThemes.includes(achievement.theme)) {
+                    this.unlockedThemes.push(achievement.theme);
+                }
+            }
+        });
+        this.updateAchievementsList();
+    }
+
+    showAchievementNotification(achievement) {
+        // Simple notification
+        const notification = document.createElement('div');
+        notification.className = 'achievement-notification';
+        notification.innerHTML = `
+            <strong>🏆 Achievement Unlocked!</strong><br>
+            ${achievement.name}<br>
+            <small>${achievement.desc}</small>
+            ${achievement.theme ? `<br><small>🎨 Theme "${achievement.theme}" unlocked!</small>` : ''}
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    updateAchievementsList() {
+        const achievementsElement = document.getElementById('achievementsList');
+        if (!achievementsElement) return;
+        
+        let html = '';
+        const unlockedAchievements = Object.values(this.achievements).filter(a => a.unlocked);
+        
+        if (unlockedAchievements.length === 0) {
+            html = '<p class="text-muted">Nog geen prestaties behaald...</p>';
+        } else {
+            unlockedAchievements.forEach(achievement => {
+                html += `
+                    <div class="achievement-item mb-2">
+                        <div class="d-flex align-items-center">
+                            <span class="me-2">🏆</span>
+                            <div>
+                                <strong>${achievement.name}</strong>
+                                <div class="text-muted small">${achievement.desc}</div>
+                                ${achievement.theme ? `<span class="badge bg-info mt-1">${achievement.theme} theme</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        achievementsElement.innerHTML = html;
+    }
+
+    // Golden Cookie / Special Events System - removed
 }

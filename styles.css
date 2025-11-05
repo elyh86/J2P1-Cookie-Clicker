@@ -393,27 +393,7 @@ body.light-mode #darkModeIcon::before {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.special-events {
-    min-height: 60px;
-    padding: 15px;
-    background: linear-gradient(45deg, var(--warning-color), var(--secondary-color));
-    border-radius: var(--border-radius);
-    border: 2px dashed var(--primary-color);
-    box-shadow: var(--warm-glow);
-    color: var(--dark-color);
-    font-weight: 600;
-    display: none; /* Hidden by default, shown when events are active */
-}
-
-.special-events.active {
-    display: block;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-}
+/* Special events - verwijderd, zie Golden Cookie sectie verderop */
 
 .shop-panel .nav-tabs {
     border-bottom: none;
@@ -534,6 +514,7 @@ body.light-mode #darkModeIcon::before {
     .cookie-section {
         padding: 30px 15px;
     }
+    
 }
 
 @media (max-width: 768px) {
@@ -560,6 +541,7 @@ body.light-mode #darkModeIcon::before {
         height: 120px;
         font-size: 48px;
     }
+    
 }
 
 @media (max-width: 576px) {
@@ -604,6 +586,83 @@ body.light-mode #darkModeIcon::before {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+
+/* Cookie floating animation */
+@keyframes floatCookie {
+    0%, 100% { 
+        transform: translateY(0) rotate(0deg);
+    }
+    25% { 
+        transform: translateY(-8px) rotate(2deg);
+    }
+    50% { 
+        transform: translateY(-12px) rotate(0deg);
+    }
+    75% { 
+        transform: translateY(-8px) rotate(-2deg);
+    }
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from { 
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Shine effect */
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(30deg); }
+    100% { transform: translateX(100%) rotate(30deg); }
+}
+
+/* Apply animations */
+.animate-bounce {
+    animation: floatCookie 4s ease-in-out infinite;
+}
+.animate-fade {
+    animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Achievement Notification */
+.achievement-notification {
+    position: fixed;
+    top: 80px;
+    right: -400px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #2c1810;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    max-width: 300px;
+    font-family: var(--font-secondary);
+    border: 3px solid #daa520;
+    transition: right 0.3s ease;
+}
+
+.achievement-notification.show {
+    right: 20px;
+}
+
+.achievement-notification strong {
+    font-size: 1.1em;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.achievement-item {
+    padding: 10px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border-left: 4px solid #ffd700;
 }
 
 @media print {
