@@ -8,17 +8,8 @@ class Autoclicker {
         this.currentCost = baseCost;
     }
 
-    canAfford(cookies) {
-        return cookies >= this.currentCost;
-    }
-
     purchase() {
-        if (this.count === 0) {
-            this.count = 1;
-        } else {
-            this.count++;
-        }
-        
+        this.count++;
         const cost = this.currentCost;
         this.currentCost = Math.floor(this.currentCost * this.costMultiplier);
         return cost;
@@ -32,14 +23,6 @@ class Autoclicker {
         this.count = 0;
         this.currentCost = this.baseCost;
     }
-
-    getCount() {
-        return this.count;
-    }
-
-    getCost() {
-        return this.currentCost;
-    }
 }
 
 class Upgrade {
@@ -51,16 +34,9 @@ class Upgrade {
         this.owned = false;
     }
 
-    canAfford(cookies) {
-        return cookies >= this.cost && !this.owned;
-    }
-
     purchase() {
-        if (!this.owned) {
-            this.owned = true;
-            return this.cost;
-        }
-        return 0;
+        this.owned = true;
+        return this.cost;
     }
 
     getMultiplier() {
@@ -170,58 +146,28 @@ class CookieGame {
     }
     
     updateDisplay() {
-        if (this.cookieCountElement) {
-            // Show exact amount of cookies (no formatting)
-            this.cookieCountElement.textContent = Math.floor(this.cookies).toLocaleString();
-        }
-        
-        if (this.totalCookiesElement) {
-            this.totalCookiesElement.textContent = this.formatNumber(this.totalCookies);
-        }
-        
-        if (this.totalClicksElement) {
-            this.totalClicksElement.textContent = this.formatNumber(this.totalClicks);
-        }
-        
-        if (this.perClickElement) {
-            this.perClickElement.textContent = this.formatNumber(this.cookiesPerClick);
-        }
-        
-        if (this.cookiesPerSecondElement) {
-            this.cookiesPerSecondElement.textContent = this.formatNumber(this.cookiesPerSecond);
-        }
-        
+        if (this.cookieCountElement) this.cookieCountElement.textContent = Math.floor(this.cookies).toLocaleString();
+        if (this.totalCookiesElement) this.totalCookiesElement.textContent = this.formatNumber(this.totalCookies);
+        if (this.totalClicksElement) this.totalClicksElement.textContent = this.formatNumber(this.totalClicks);
+        if (this.perClickElement) this.perClickElement.textContent = this.formatNumber(this.cookiesPerClick);
+        if (this.cookiesPerSecondElement) this.cookiesPerSecondElement.textContent = this.formatNumber(this.cookiesPerSecond);
         this.updatePurchasedItems();
         this.checkAchievements();
     }
     
     showClickEffect() {
-        if (this.clickEffectElement) {
-            this.clickEffectElement.textContent = '+' + this.cookiesPerClick;
-            this.clickEffectElement.classList.remove('animate');
-            
-            setTimeout(() => {
-                this.clickEffectElement.classList.add('animate');
-            }, 10);
-        }
+        if (!this.clickEffectElement) return;
+        this.clickEffectElement.textContent = '+' + this.cookiesPerClick;
+        this.clickEffectElement.classList.remove('animate');
+        setTimeout(() => this.clickEffectElement.classList.add('animate'), 10);
     }
     
     formatNumber(number) {
-        // Altijd hele getallen, geen decimalen
         number = Math.floor(number);
-        
-        if (number < 1000) {
-            return number.toString();
-        }
-        if (number < 1000000) {
-            return Math.floor(number / 1000) + 'K';
-        }
-        if (number < 1000000000) {
-            return Math.floor(number / 1000000) + 'M';
-        }
-        if (number < 1000000000000) {
-            return Math.floor(number / 1000000000) + 'B';
-        }
+        if (number < 1000) return number.toString();
+        if (number < 1000000) return Math.floor(number / 1000) + 'K';
+        if (number < 1000000000) return Math.floor(number / 1000000) + 'M';
+        if (number < 1000000000000) return Math.floor(number / 1000000000) + 'B';
         return Math.floor(number / 1000000000000) + 'T';
     }
     
@@ -253,25 +199,15 @@ class CookieGame {
             });
         }
         
-        if (data.upgrades) {
-            Object.keys(this.upgrades).forEach(key => {
-                if (data.upgrades[key]) {
-                    this.upgrades[key].owned = data.upgrades[key].owned || false;
-                }
-            });
-        }
+        if (data.upgrades) Object.keys(this.upgrades).forEach(key => {
+            if (data.upgrades[key]) this.upgrades[key].owned = data.upgrades[key].owned || false;
+        });
         
-        if (data.achievements) {
-            Object.keys(this.achievements).forEach(key => {
-                if (data.achievements[key]) {
-                    this.achievements[key].unlocked = data.achievements[key].unlocked || false;
-                }
-            });
-        }
+        if (data.achievements) Object.keys(this.achievements).forEach(key => {
+            if (data.achievements[key]) this.achievements[key].unlocked = data.achievements[key].unlocked || false;
+        });
         
-        if (data.unlockedThemes) {
-            this.unlockedThemes = data.unlockedThemes;
-        }
+        if (data.unlockedThemes) this.unlockedThemes = data.unlockedThemes;
         
         this.updateDisplay();
         this.renderSimpleStore();
@@ -285,23 +221,11 @@ class CookieGame {
         this.cookiesPerClick = 1;
         this.cookiesPerSecond = 0;
         
-        // Reset autoclickers
-        Object.values(this.autoclickers).forEach(autoclicker => {
-            autoclicker.reset();
-        });
-        
-        // Reset upgrades
-        Object.values(this.upgrades).forEach(upgrade => {
-            upgrade.reset();
-        });
-        
-        // Reset achievements
-        Object.values(this.achievements).forEach(achievement => {
-            achievement.unlocked = false;
-        });
+        Object.values(this.autoclickers).forEach(a => a.reset());
+        Object.values(this.upgrades).forEach(u => u.reset());
+        Object.values(this.achievements).forEach(a => a.unlocked = false);
         
         this.unlockedThemes = ['dark', 'light'];
-        
         this.updateDisplay();
         this.renderSimpleStore();
         this.renderUpgrades();
@@ -338,10 +262,10 @@ class CookieGame {
             autoclickersHTML += `
                 <div class="p-3 border-bottom">
                     <h6>${autoclicker.name}</h6>
-                    <p>Owned: ${autoclicker.getCount()}</p>
+                    <p>Owned: ${autoclicker.count}</p>
                     <p>+${autoclicker.baseProduction} cookie/sec each</p>
                     <button onclick="cookieGame.buyAutoclicker('${key}')" class="btn btn-primary">
-                        Buy for ${autoclicker.getCost()} cookies
+                        Buy for ${autoclicker.currentCost} cookies
                     </button>
                 </div>
             `;
@@ -352,15 +276,12 @@ class CookieGame {
     
     buyAutoclicker(autoclickerKey) {
         const autoclicker = this.autoclickers[autoclickerKey];
-        if (!autoclicker) return;
+        if (!autoclicker || this.cookies < autoclicker.currentCost) return;
         
-        if (autoclicker.canAfford(this.cookies)) {
-            const cost = autoclicker.purchase();
-            this.cookies -= cost;
-            this.updateDisplay();
-            this.renderSimpleStore();
-            this.renderUpgrades();
-        }
+        this.cookies -= autoclicker.purchase();
+        this.updateDisplay();
+        this.renderSimpleStore();
+        this.renderUpgrades();
     }
     
     updatePurchasedItems() {
@@ -368,10 +289,9 @@ class CookieGame {
         
         let itemsHTML = '';
         
-        // Show autoclickers
+        const multiplier = this.calculateAutoclickerMultiplier();
         Object.values(this.autoclickers).forEach(autoclicker => {
-            if (autoclicker.getCount() > 0) {
-                const multiplier = this.calculateAutoclickerMultiplier();
+            if (autoclicker.count > 0) {
                 const production = autoclicker.getProduction(multiplier);
                 itemsHTML += `
                     <div class="purchased-item mb-2">
@@ -380,7 +300,7 @@ class CookieGame {
                                 <strong>${autoclicker.name}</strong>
                                 <div class="text-muted small">+${production} cookies/sec</div>
                             </div>
-                            <span class="badge bg-primary">${autoclicker.getCount()}</span>
+                            <span class="badge bg-primary">${autoclicker.count}</span>
                         </div>
                     </div>
                 `;
@@ -455,15 +375,12 @@ class CookieGame {
     
     buyUpgrade(upgradeKey) {
         const upgrade = this.upgrades[upgradeKey];
-        if (!upgrade) return;
+        if (!upgrade || this.cookies < upgrade.cost || upgrade.owned) return;
         
-        if (upgrade.canAfford(this.cookies)) {
-            const cost = upgrade.purchase();
-            this.cookies -= cost;
-            this.updateDisplay();
-            this.renderSimpleStore();
-            this.renderUpgrades();
-        }
+        this.cookies -= upgrade.purchase();
+        this.updateDisplay();
+        this.renderSimpleStore();
+        this.renderUpgrades();
     }
     
     checkAchievements() {
@@ -482,7 +399,6 @@ class CookieGame {
     }
 
     showAchievementNotification(achievement) {
-        // Simple notification
         const notification = document.createElement('div');
         notification.className = 'achievement-notification';
         notification.innerHTML = `
@@ -492,7 +408,6 @@ class CookieGame {
             ${achievement.theme ? `<br><small>🎨 Theme "${achievement.theme}" unlocked!</small>` : ''}
         `;
         document.body.appendChild(notification);
-        
         setTimeout(() => notification.classList.add('show'), 100);
         setTimeout(() => {
             notification.classList.remove('show');
@@ -529,5 +444,4 @@ class CookieGame {
         achievementsElement.innerHTML = html;
     }
 
-    // Golden Cookie / Special Events System - removed
 }

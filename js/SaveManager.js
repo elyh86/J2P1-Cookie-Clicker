@@ -1,26 +1,15 @@
 class SaveManager {
     constructor() {
         this.saveKey = 'cookieGame';
-        this.saveButton = null;
-        this.resetButton = null;
-        
-        this.initializeElements();
         this.setupEventListeners();
-    }
-    
-    initializeElements() {
-        this.saveButton = document.getElementById('saveGame');
-        this.resetButton = document.getElementById('restartGame');
     }
 
     setupEventListeners() {
-        if (this.saveButton) {
-            this.saveButton.addEventListener('click', () => this.showSaveDialog());
-        }
+        const saveBtn = document.getElementById('saveGame');
+        const resetBtn = document.getElementById('restartGame');
         
-        if (this.resetButton) {
-            this.resetButton.addEventListener('click', () => this.showResetDialog());
-        }
+        if (saveBtn) saveBtn.addEventListener('click', () => this.showSaveDialog());
+        if (resetBtn) resetBtn.addEventListener('click', () => this.showResetDialog());
     }
 
     saveGame(gameData) {
