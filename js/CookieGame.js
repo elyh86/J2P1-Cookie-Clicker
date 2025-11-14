@@ -1,5 +1,19 @@
+// ============================================
+// GAME CLASSES
+// ============================================
+
+/**
+ * Autoclicker class - Beheert een type autoclicker die automatisch cookies produceert
+ * @class
+ */
 class Autoclicker {
-    constructor(name, baseCost, baseProduction, costMultiplier = 1.5) {
+    /**
+     * @param {string} name - Naam van de autoclicker
+     * @param {number} baseCost - Startprijs
+     * @param {number} baseProduction - Cookies per seconde per autoclicker
+     * @param {number} costMultiplier - Prijs stijging per aankoop (default 1.15)
+     */
+    constructor(name, baseCost, baseProduction, costMultiplier = 1.15) {
         this.name = name;
         this.baseCost = baseCost;
         this.baseProduction = baseProduction;
@@ -11,12 +25,12 @@ class Autoclicker {
     purchase() {
         this.count++;
         const cost = this.currentCost;
-        this.currentCost = Math.floor(this.currentCost * this.costMultiplier);
+        this.currentCost = Math.floor(this.currentCost * this.costMultiplier); // Prijs stijgt na elke aankoop
         return cost;
     }
 
-    getProduction(upgradeMultiplier = 1) {
-        return this.count * this.baseProduction * upgradeMultiplier;
+    getProduction(multiplier = 1) {
+        return this.count * this.baseProduction * multiplier;
     }
 
     reset() {
@@ -25,7 +39,17 @@ class Autoclicker {
     }
 }
 
+/**
+ * Upgrade class - Beheert een upgrade die productie vermenigvuldigt
+ * @class
+ */
 class Upgrade {
+    /**
+     * @param {string} name - Naam van de upgrade
+     * @param {string} description - Beschrijving van het effect
+     * @param {number} cost - Prijs van de upgrade
+     * @param {number} multiplier - Productie multiplier (bijv. 2 = 2x sneller)
+     */
     constructor(name, description, cost, multiplier) {
         this.name = name;
         this.description = description;
@@ -48,33 +72,75 @@ class Upgrade {
     }
 }
 
+/**
+ * Achievement class - Beheert een prestatie die unlocked kan worden
+ * @class
+ */
+class Achievement {
+    /**
+     * @param {string} name - Naam van de achievement
+     * @param {string} description - Beschrijving van de requirement
+     * @param {Function} requirement - Functie die true returned als achievement behaald is
+     * @param {string|null} theme - Optioneel: theme dat unlocked wordt
+     */
+    constructor(name, description, requirement, theme = null) {
+        this.name = name;
+        this.description = description;
+        this.requirement = requirement;
+        this.theme = theme;
+        this.unlocked = false;
+    }
+
+    check() {
+        if (!this.unlocked && this.requirement()) {
+            this.unlocked = true;
+            return true; // Achievement net behaald
+        }
+        return false; // Al behaald of nog niet voldaan aan requirement
+    }
+
+    reset() {
+        this.unlocked = false;
+    }
+}
+
+// ============================================
+// MAIN GAME
+// ============================================
+
+/**
+ * CookieGame class - Main game controller die alle game logica beheert
+ * @class
+ */
 class CookieGame {
+    /**
+     * Initialiseert het Cookie Clicker spel
+     * @constructor
+     */
     constructor() {
+        // Game state
         this.cookies = 0;
         this.totalCookies = 0;
         this.totalClicks = 0;
         this.cookiesPerClick = 1;
         this.cookiesPerSecond = 0;
         
+        // Initialize game data
         this.initializeAutoclickers();
         this.initializeUpgrades();
         this.initializeAchievements();
-        
-        this.cookieCountElement = null;
-        this.totalCookiesElement = null;
-        this.totalClicksElement = null;
-        this.perClickElement = null;
-        this.clickEffectElement = null;
-        this.cookieButton = null;
-        this.cookiesPerSecondElement = null;
-        this.autoclickersListElement = null;
-        
         this.initializeElements();
         this.setupEventListeners();
+        
+        // Start game
         this.renderSimpleStore();
         this.renderUpgrades();
         this.startAutoGeneration();
     }
+    
+    // ============================================
+    // INITIALIZATION
+    // ============================================
     
     initializeAutoclickers() {
         this.autoclickers = {
@@ -106,15 +172,15 @@ class CookieGame {
 
     initializeAchievements() {
         this.achievements = {
-            firstClick: { name: "Eerste Klik", desc: "Klik je eerste cookie", unlocked: false, requirement: () => this.totalClicks >= 1, theme: null },
-            clickMaster: { name: "Klik Meester", desc: "Klik 100 keer", unlocked: false, requirement: () => this.totalClicks >= 100, theme: "blue" },
-            cookieCollector: { name: "Cookie Verzamelaar", desc: "Verzamel 1000 cookies", unlocked: false, requirement: () => this.totalCookies >= 1000, theme: null },
-            millionaire: { name: "Miljonair", desc: "Verzamel 1 miljoen cookies", unlocked: false, requirement: () => this.totalCookies >= 1000000, theme: "gold" },
-            firstAutoclicker: { name: "Eerste Helper", desc: "Koop je eerste autoclicker", unlocked: false, requirement: () => Object.values(this.autoclickers).some(a => a.count > 0), theme: null },
-            upgradeUnlocked: { name: "Verbeterd", desc: "Koop je eerste upgrade", unlocked: false, requirement: () => Object.values(this.upgrades).some(u => u.owned), theme: "purple" },
-            productionKing: { name: "Productie Koning", desc: "Bereik 100 cookies/sec", unlocked: false, requirement: () => this.cookiesPerSecond >= 100, theme: "green" }
+            firstClick: new Achievement("Eerste Klik", "Klik je eerste cookie", () => this.totalClicks >= 1),
+            clickMaster: new Achievement("Klik Meester", "Klik 100 keer", () => this.totalClicks >= 100, "blue"),
+            cookieCollector: new Achievement("Cookie Verzamelaar", "Verzamel 1000 cookies", () => this.totalCookies >= 1000),
+            millionaire: new Achievement("Miljonair", "Verzamel 1 miljoen cookies", () => this.totalCookies >= 1000000, "gold"),
+            firstAutoclicker: new Achievement("Eerste Helper", "Koop je eerste autoclicker", () => Object.values(this.autoclickers).some(a => a.count > 0)),
+            upgradeUnlocked: new Achievement("Verbeterd", "Koop je eerste upgrade", () => Object.values(this.upgrades).some(u => u.owned), "purple"),
+            productionKing: new Achievement("Productie Koning", "Bereik 100 cookies/sec", () => this.cookiesPerSecond >= 100, "green")
         };
-        this.unlockedThemes = ['dark', 'light']; // Start themes
+        this.unlockedThemes = ['dark', 'light'];
     }
 
     initializeElements() {
@@ -136,14 +202,22 @@ class CookieGame {
         }
     }
     
+    // ============================================
+    // CORE GAME LOGIC
+    // ============================================
+    
     clickCookie() {
+        // Voeg cookies toe bij klik
         this.cookies += this.cookiesPerClick;
         this.totalCookies += this.cookiesPerClick;
-        this.totalClicks += 1;
-        
+        this.totalClicks++;
         this.updateDisplay();
         this.showClickEffect();
     }
+    
+    // ============================================
+    // DISPLAY & UI
+    // ============================================
     
     updateDisplay() {
         if (this.cookieCountElement) this.cookieCountElement.textContent = Math.floor(this.cookies).toLocaleString();
@@ -162,14 +236,18 @@ class CookieGame {
         setTimeout(() => this.clickEffectElement.classList.add('animate'), 10);
     }
     
-    formatNumber(number) {
-        number = Math.floor(number);
-        if (number < 1000) return number.toString();
-        if (number < 1000000) return Math.floor(number / 1000) + 'K';
-        if (number < 1000000000) return Math.floor(number / 1000000) + 'M';
-        if (number < 1000000000000) return Math.floor(number / 1000000000) + 'B';
-        return Math.floor(number / 1000000000000) + 'T';
+    formatNumber(num) {
+        num = Math.floor(num);
+        if (num < 1000) return num.toString();
+        if (num < 1000000) return Math.floor(num / 1000) + 'K';
+        if (num < 1000000000) return Math.floor(num / 1000000) + 'M';
+        if (num < 1000000000000) return Math.floor(num / 1000000000) + 'B';
+        return Math.floor(num / 1000000000000) + 'T';
     }
+    
+    // ============================================
+    // SAVE / LOAD / RESET
+    // ============================================
     
     getGameData() {
         return {
@@ -223,7 +301,7 @@ class CookieGame {
         
         Object.values(this.autoclickers).forEach(a => a.reset());
         Object.values(this.upgrades).forEach(u => u.reset());
-        Object.values(this.achievements).forEach(a => a.unlocked = false);
+        Object.values(this.achievements).forEach(a => a.reset());
         
         this.unlockedThemes = ['dark', 'light'];
         this.updateDisplay();
@@ -231,29 +309,29 @@ class CookieGame {
         this.renderUpgrades();
     }
     
-    calculateAutoclickerMultiplier() {
-        let multiplier = 1;
-        Object.values(this.upgrades).forEach(upgrade => {
-            multiplier *= upgrade.getMultiplier();
-        });
-        return multiplier;
+    // ============================================
+    // CALCULATIONS
+    // ============================================
+    
+    calculateMultiplier() {
+        // Bereken totale multiplier van alle upgrades
+        return Object.values(this.upgrades).reduce((mult, upgrade) => mult * upgrade.getMultiplier(), 1);
     }
 
     calculateTotalProduction() {
-        let total = 0;
-        const multiplier = this.calculateAutoclickerMultiplier();
-        
-        Object.values(this.autoclickers).forEach(autoclicker => {
-            total += autoclicker.getProduction(multiplier);
-        });
-        
-        return total;
+        // Bereken totale cookies per seconde
+        const multiplier = this.calculateMultiplier();
+        return Object.values(this.autoclickers).reduce((total, ac) => total + ac.getProduction(multiplier), 0);
     }
 
-    // Autoclickers Store
+    // ============================================
+    // AUTOCLICKERS
+    // ============================================
+    
     renderSimpleStore() {
         if (!this.autoclickersListElement) return;
         
+        // Update productie en render autoclickers
         this.cookiesPerSecond = this.calculateTotalProduction();
         
         let autoclickersHTML = '';
@@ -274,11 +352,11 @@ class CookieGame {
         this.autoclickersListElement.innerHTML = autoclickersHTML;
     }
     
-    buyAutoclicker(autoclickerKey) {
-        const autoclicker = this.autoclickers[autoclickerKey];
-        if (!autoclicker || this.cookies < autoclicker.currentCost) return;
+    buyAutoclicker(key) {
+        const ac = this.autoclickers[key];
+        if (!ac || this.cookies < ac.currentCost) return; // Check of aankoop mogelijk is
         
-        this.cookies -= autoclicker.purchase();
+        this.cookies -= ac.purchase();
         this.updateDisplay();
         this.renderSimpleStore();
         this.renderUpgrades();
@@ -287,20 +365,19 @@ class CookieGame {
     updatePurchasedItems() {
         if (!this.purchasedItemsElement) return;
         
-        let itemsHTML = '';
+        const multiplier = this.calculateMultiplier();
+        let html = '';
         
-        const multiplier = this.calculateAutoclickerMultiplier();
-        Object.values(this.autoclickers).forEach(autoclicker => {
-            if (autoclicker.count > 0) {
-                const production = autoclicker.getProduction(multiplier);
-                itemsHTML += `
+        Object.values(this.autoclickers).forEach(ac => {
+            if (ac.count > 0) {
+                html += `
                     <div class="purchased-item mb-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>${autoclicker.name}</strong>
-                                <div class="text-muted small">+${production} cookies/sec</div>
+                                <strong>${ac.name}</strong>
+                                <div class="text-muted small">+${ac.getProduction(multiplier)} cookies/sec</div>
                             </div>
-                            <span class="badge bg-primary">${autoclicker.count}</span>
+                            <span class="badge bg-primary">${ac.count}</span>
                         </div>
                     </div>
                 `;
@@ -309,7 +386,7 @@ class CookieGame {
         
         Object.values(this.upgrades).forEach(upgrade => {
             if (upgrade.owned) {
-                itemsHTML += `
+                html += `
                     <div class="purchased-item mb-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -323,14 +400,11 @@ class CookieGame {
             }
         });
         
-        if (itemsHTML === '') {
-            itemsHTML = '<p class="text-muted">Nog geen items gekocht...</p>';
-        }
-        
-        this.purchasedItemsElement.innerHTML = itemsHTML;
+        this.purchasedItemsElement.innerHTML = html || '<p class="text-muted">Nog geen items gekocht...</p>';
     }
     
     startAutoGeneration() {
+        // Genereer cookies elke seconde op basis van autoclickers
         setInterval(() => {
             if (this.cookiesPerSecond > 0) {
                 this.cookies += this.cookiesPerSecond;
@@ -339,6 +413,10 @@ class CookieGame {
             }
         }, 1000);
     }
+    
+    // ============================================
+    // UPGRADES
+    // ============================================
     
     renderUpgrades() {
         if (!this.upgradesListElement) return;
@@ -375,21 +453,24 @@ class CookieGame {
     
     buyUpgrade(upgradeKey) {
         const upgrade = this.upgrades[upgradeKey];
-        if (!upgrade || this.cookies < upgrade.cost || upgrade.owned) return;
+        if (!upgrade || this.cookies < upgrade.cost || upgrade.owned) return; // Check of aankoop mogelijk is
         
         this.cookies -= upgrade.purchase();
         this.updateDisplay();
-        this.renderSimpleStore();
+        this.renderSimpleStore(); // Update productie met nieuwe multiplier
         this.renderUpgrades();
     }
     
+    // ============================================
+    // ACHIEVEMENTS
+    // ============================================
+    
     checkAchievements() {
-        Object.entries(this.achievements).forEach(([key, achievement]) => {
-            if (!achievement.unlocked && achievement.requirement()) {
-                achievement.unlocked = true;
+        Object.values(this.achievements).forEach(achievement => {
+            if (achievement.check()) {
                 this.showAchievementNotification(achievement);
                 
-                // Unlock theme if achievement has one
+                // Unlock theme als achievement er een heeft
                 if (achievement.theme && !this.unlockedThemes.includes(achievement.theme)) {
                     this.unlockedThemes.push(achievement.theme);
                 }
@@ -399,12 +480,13 @@ class CookieGame {
     }
 
     showAchievementNotification(achievement) {
+        // Toon achievement popup voor 3 seconden
         const notification = document.createElement('div');
         notification.className = 'achievement-notification';
         notification.innerHTML = `
             <strong>🏆 Achievement Unlocked!</strong><br>
             ${achievement.name}<br>
-            <small>${achievement.desc}</small>
+            <small>${achievement.description}</small>
             ${achievement.theme ? `<br><small>🎨 Theme "${achievement.theme}" unlocked!</small>` : ''}
         `;
         document.body.appendChild(notification);
@@ -432,7 +514,7 @@ class CookieGame {
                             <span class="me-2">🏆</span>
                             <div>
                                 <strong>${achievement.name}</strong>
-                                <div class="text-muted small">${achievement.desc}</div>
+                                <div class="text-muted small">${achievement.description}</div>
                                 ${achievement.theme ? `<span class="badge bg-info mt-1">${achievement.theme} theme</span>` : ''}
                             </div>
                         </div>
